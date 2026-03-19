@@ -1,0 +1,21 @@
+# ===================================
+# PriceOrbit - Application Properties EXAMPLE
+# ===================================
+# This is a SAFE EXAMPLE file - contains no real secrets
+# Copy this file, rename it to application.properties
+# and fill in your own values before running the app
+
+# ----- SERVER -----
+server.port=8080
+
+# ----- MONGODB -----
+spring.data.mongodb.uri=mongodb+srv://YOUR_USERNAME:YOUR_PASSWORD@cluster0.xxxxx.mongodb.net/priceorbit
+spring.data.mongodb.database=priceorbit
+
+# ----- JWT SECRET -----
+jwt.secret=YOUR_JWT_SECRET_KEY_MINIMUM_32_CHARACTERS_LONG
+jwt.expiration=86400000
+
+# ----- RAPIDAPI (PriceScout) -----
+rapidapi.key=YOUR_RAPIDAPI_KEY_HERE
+rapidapi.host=pricescout.p.rapidapi.com

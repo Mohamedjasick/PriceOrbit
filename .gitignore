@@ -1,0 +1,47 @@
+# ===================================
+# PriceOrbit - Git Ignore File
+# ===================================
+
+# ----- SECRETS (NEVER UPLOAD THESE) -----
+# Your real application.properties has MongoDB password + JWT secret
+backend/src/main/resources/application.properties
+
+# ----- FRONTEND - Node.js -----
+# node_modules is 100,000+ files, never push this
+frontend/node_modules/
+
+# React build output (generated, not needed in repo)
+frontend/build/
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+
+# ----- BACKEND - Java / Maven -----
+# Compiled Java class files
+backend/target/
+
+# Maven wrapper (optional, can keep if you want)
+# backend/.mvn/
+
+# ----- IDE & EDITOR FILES -----
+# VS Code settings (personal to your machine)
+.vscode/
+*.code-workspace
+
+# IntelliJ IDEA (in case you switch IDEs)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# ----- OS FILES -----
+# Windows
+Thumbs.db
+desktop.ini
+
+# Mac (in case)
+.DS_Store
+
+# ----- LOGS -----
+*.log
+logs/
