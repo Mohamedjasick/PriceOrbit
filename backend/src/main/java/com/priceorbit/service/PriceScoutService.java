@@ -18,10 +18,10 @@ import java.util.List;
 @Service
 public class PriceScoutService {
 
-    @Value("${rapidapi.key}")
+    @Value("${rapidapi.key:dummy}")
     private String rapidApiKey;
 
-    @Value("${pricescout.host}")
+    @Value("${pricescout.host:dummy}")
     private String rapidApiHost;
 
     private static final String PRICESCOUT_URL = "https://pricescout.p.rapidapi.com/search";
