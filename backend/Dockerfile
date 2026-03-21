@@ -10,15 +10,21 @@ FROM eclipse-temurin:17-jre
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
-# Create application.properties from environment variables at runtime
-RUN mkdir -p /app/config
-RUN echo 'server.port=${PORT:8080}\n\
+# Startup script that writes properties from env vars then launches the app
+RUN echo '#!/bin/sh\n\
+mkdir -p /app/config\n\
+cat > /app/config/application.properties << EOF\n\
+server.port=${PORT:-8080}\n\
 spring.data.mongodb.uri=${MONGODB_URI}\n\
 spring.data.mongodb.database=priceorbit\n\
 jwt.secret=${JWT_SECRET}\n\
 jwt.expiration=86400000\n\
-cors.allowed.origins=${CORS_ORIGINS:http://localhost:3000}\n\
-spring.application.name=priceorbit' > /app/config/application.properties
+cors.allowed.origins=${CORS_ORIGINS:-http://localhost:3000}\n\
+spring.application.name=priceorbit\n\
+EOF\n\
+exec java -Dspring.config.location=optional:classpath:/,/app/config/ -jar /app/app.jar' > /app/start.sh
+
+RUN chmod +x /app/start.sh
 
 EXPOSE 8080
-ENTRYPOINT ["java", "-Dspring.config.location=classpath:/,/app/config/", "-Dserver.port=${PORT:-8080}", "-jar", "app.jar"]
+ENTRYPOINT ["/bin/sh", "/app/start.sh"]
