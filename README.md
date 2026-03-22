@@ -7,6 +7,9 @@
 ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green?logo=mongodb)
 ![Java](https://img.shields.io/badge/Java-17-orange?logo=java)
 ![JWT](https://img.shields.io/badge/Auth-JWT-yellow)
+![Live](https://img.shields.io/badge/Live-Deployed-success)
+
+**🌐 Live Demo: [https://price-orbit.vercel.app](https://price-orbit.vercel.app)**
 
 ---
 
@@ -93,6 +96,13 @@ PriceOrbit helps Indian shoppers compare product prices between **Amazon** and *
 |------------|---------|
 | MongoDB Atlas | Cloud NoSQL database |
 | RapidAPI PriceScout | Live Amazon & Flipkart price data |
+
+### Deployment
+| Service | Purpose |
+|---------|---------|
+| Vercel | Frontend hosting |
+| Render | Backend hosting |
+| MongoDB Atlas | Cloud database |
 
 ---
 
@@ -201,7 +211,7 @@ npm start
 - [x] Price drop alerts
 - [x] Saved products
 - [x] Trending & Deals pages
-- [ ] Live deployment
+- [x] Live deployment (Vercel + Render)
 - [ ] RapidAPI live integration (quota reset pending)
 - [ ] Email notifications for alerts
 
@@ -217,5 +227,3 @@ GitHub: [@Mohamedjasick](https://github.com/Mohamedjasick)
 ## License
 
 This project is open source and available under the [MIT License](LICENSE).
-
-
