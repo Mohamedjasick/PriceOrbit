@@ -14,16 +14,10 @@ function Alerts() {
 
   const navigate = useNavigate();
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const token   = localStorage.getItem("token");
     const userStr = localStorage.getItem("user");
-
-    if (!token || !userStr) {
-      navigate("/signin");
-      return;
-    }
-
+    if (!token || !userStr) { navigate("/signin"); return; }
     try {
       const user = JSON.parse(userStr);
       fetchAlerts(user.id, token);
@@ -35,35 +29,14 @@ function Alerts() {
   const fetchAlerts = async (userId, token) => {
     try {
       setLoading(true);
-      const res = await fetch(
-        `${API_BASE}/api/alerts/user/` + userId,
-        {
-          headers: {
-            "Authorization": "Bearer " + token,
-            "Content-Type": "application/json"
-          }
-        }
-      );
-
-      if (!res.ok) {
-        console.error("Alerts fetch failed with status:", res.status);
-        setAlerts([]);
-        return;
-      }
-
+      const res = await fetch(`${API_BASE}/api/alerts/user/` + userId, {
+        headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" }
+      });
+      if (!res.ok) { setAlerts([]); return; }
       const data = await res.json();
-
-      if (!Array.isArray(data)) {
-        console.error("Unexpected response format:", data);
-        setAlerts([]);
-        return;
-      }
-
-      const sorted = [...data].sort((a, b) => a.triggered - b.triggered);
-      setAlerts(sorted);
-
+      if (!Array.isArray(data)) { setAlerts([]); return; }
+      setAlerts([...data].sort((a, b) => a.triggered - b.triggered));
     } catch (err) {
-      console.error("Failed to fetch alerts:", err);
       setAlerts([]);
     } finally {
       setLoading(false);
@@ -72,93 +45,49 @@ function Alerts() {
 
   const removeAlert = async (alertId) => {
     const token = localStorage.getItem("token");
-
     let user;
-    try {
-      user = JSON.parse(localStorage.getItem("user"));
-    } catch (e) {
-      return;
-    }
+    try { user = JSON.parse(localStorage.getItem("user")); } catch (e) { return; }
     if (!user) return;
-
     try {
-      await fetch(
-        `${API_BASE}/api/alerts/` + alertId + "/user/" + user.id,
-        {
-          method: "DELETE",
-          headers: {
-            "Authorization": "Bearer " + token,
-            "Content-Type": "application/json"
-          }
-        }
-      );
+      await fetch(`${API_BASE}/api/alerts/` + alertId + "/user/" + user.id, {
+        method: "DELETE",
+        headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" }
+      });
       setAlerts(prev => prev.filter(a => a.id !== alertId));
-    } catch (err) {
-      console.error("Failed to delete alert:", err);
-    }
+    } catch (err) {}
   };
 
   const markAsRead = async (alertId) => {
     const token = localStorage.getItem("token");
-
-    // token is used in headers below; user not needed for this endpoint
     if (!token) return;
-
     try {
-      await fetch(
-        `${API_BASE}/api/alerts/` + alertId + "/read",
-        {
-          method: "PATCH",
-          headers: {
-            "Authorization": "Bearer " + token,
-            "Content-Type": "application/json"
-          }
-        }
-      );
-      setAlerts(prev => prev.map(a =>
-        a.id === alertId ? { ...a, read: true } : a
-      ));
-    } catch (err) {
-      console.error("Failed to mark alert as read:", err);
-    }
+      await fetch(`${API_BASE}/api/alerts/` + alertId + "/read", {
+        method: "PATCH",
+        headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" }
+      });
+      setAlerts(prev => prev.map(a => a.id === alertId ? { ...a, read: true } : a));
+    } catch (err) {}
   };
 
   const checkPrices = async () => {
     const token = localStorage.getItem("token");
-
     let user;
-    try {
-      user = JSON.parse(localStorage.getItem("user"));
-    } catch (e) {
-      return;
-    }
+    try { user = JSON.parse(localStorage.getItem("user")); } catch (e) { return; }
     if (!user) return;
-
     try {
       setChecking(true);
       setCheckMsg("");
-
-      const res = await fetch(
-        `${API_BASE}/api/alerts/check`,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": "Bearer " + token,
-            "Content-Type": "application/json"
-          }
-        }
-      );
-
+      const res  = await fetch(`${API_BASE}/api/alerts/check`, {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" }
+      });
       const data = await res.json();
-
       setCheckMsg(
         data.triggered > 0
           ? "🎉 " + data.triggered + " alert" + (data.triggered > 1 ? "s" : "") + " triggered!"
           : "✅ Checked — no new triggers yet."
       );
-
       fetchAlerts(user.id, token);
-
     } catch (err) {
       setCheckMsg("❌ Check failed. Is the backend running?");
     } finally {
@@ -188,9 +117,7 @@ function Alerts() {
       return new Date(dateVal).toLocaleDateString("en-IN", {
         day: "numeric", month: "short", year: "numeric"
       });
-    } catch {
-      return "—";
-    }
+    } catch { return "—"; }
   };
 
   return (
@@ -199,13 +126,8 @@ function Alerts() {
 
       <div className="results-container">
 
-        <div style={{
-          display: "flex", alignItems: "center",
-          justifyContent: "space-between", flexWrap: "wrap",
-          gap: "12px", marginBottom: "8px"
-        }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "8px" }}>
           <h2 style={{ margin: 0 }}>🔔 Price Alerts</h2>
-
           <button
             onClick={checkPrices}
             disabled={checking}
@@ -215,7 +137,7 @@ function Alerts() {
               color: "white", border: "none", borderRadius: "10px",
               fontWeight: "700", fontSize: "14px",
               cursor: checking ? "not-allowed" : "pointer",
-              fontFamily: "Inter, sans-serif", transition: "background 0.2s"
+              fontFamily: "Inter, sans-serif"
             }}
           >
             {checking ? "Checking..." : "🔍 Check Prices"}
@@ -238,22 +160,18 @@ function Alerts() {
           <div style={{ textAlign: "center", marginTop: "80px", color: "#888", fontSize: "16px" }}>
             Loading alerts...
           </div>
-
         ) : alerts.length === 0 ? (
-
           <div style={{ textAlign: "center", marginTop: "80px" }}>
             <div style={{ fontSize: "64px", marginBottom: "16px" }}>🔕</div>
-            <h3 style={{ fontSize: "22px", color: "#333", marginBottom: "8px" }}>
-              No alerts set yet
-            </h3>
+            <h3 style={{ fontSize: "22px", color: "#333", marginBottom: "8px" }}>No alerts set yet</h3>
             <p style={{ color: "#888", fontSize: "15px" }}>
               Search for a product and tap "🔔 Set Alert" to track its price.
             </p>
           </div>
-
         ) : (
           <div>
 
+            {/* ── Stats strip ── */}
             <div style={{ display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap" }}>
               {[
                 { label: "Total Alerts", value: alerts.length,  color: "#1a3cff", bg: "#f0f3ff" },
@@ -262,20 +180,15 @@ function Alerts() {
               ].map(stat => (
                 <div key={stat.label} style={{
                   padding: "12px 20px", backgroundColor: stat.bg,
-                  borderRadius: "10px",
-                  border: "1px solid " + stat.color + "22",
-                  minWidth: "110px"
+                  borderRadius: "10px", border: "1px solid " + stat.color + "22", minWidth: "110px"
                 }}>
-                  <div style={{ fontSize: "22px", fontWeight: "800", color: stat.color }}>
-                    {stat.value}
-                  </div>
-                  <div style={{ fontSize: "12px", color: "#666", fontWeight: "600", marginTop: "2px" }}>
-                    {stat.label}
-                  </div>
+                  <div style={{ fontSize: "22px", fontWeight: "800", color: stat.color }}>{stat.value}</div>
+                  <div style={{ fontSize: "12px", color: "#666", fontWeight: "600", marginTop: "2px" }}>{stat.label}</div>
                 </div>
               ))}
             </div>
 
+            {/* ── Tabs ── */}
             <div style={{ display: "flex", gap: "8px", marginBottom: "20px", flexWrap: "wrap" }}>
               {[
                 { key: "all",       label: "All (" + alerts.length + ")"           },
@@ -291,7 +204,7 @@ function Alerts() {
                     backgroundColor: activeTab === tab.key ? "#1a3cff" : "white",
                     color: activeTab === tab.key ? "white" : "#555",
                     fontWeight: "600", fontSize: "13px", cursor: "pointer",
-                    fontFamily: "Inter, sans-serif", transition: "all 0.2s"
+                    fontFamily: "Inter, sans-serif"
                   }}
                 >
                   {tab.label}
@@ -299,6 +212,7 @@ function Alerts() {
               ))}
             </div>
 
+            {/* ── Table ── */}
             <div style={{ overflowX: "auto" }}>
               <table style={{
                 width: "100%", borderCollapse: "collapse",
@@ -317,7 +231,6 @@ function Alerts() {
                     <th style={thStyle}>Action</th>
                   </tr>
                 </thead>
-
                 <tbody>
                   {filteredAlerts.map((alert) => {
                     const current     = alert.currentPrice    || 0;
@@ -331,20 +244,17 @@ function Alerts() {
                         key={alert.id}
                         style={{
                           borderBottom: "1px solid #f0f0f0",
-                          backgroundColor: isTriggered ? "#f0fdf4" : "white",
-                          transition: "background 0.2s"
+                          backgroundColor: isTriggered ? "#f0fdf4" : "white"
                         }}
                       >
+                        {/* Product */}
                         <td style={{ ...tdStyle, textAlign: "left", maxWidth: "220px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                             {alert.productImage && (
                               <img
                                 src={alert.productImage}
                                 alt={alert.productName}
-                                style={{
-                                  width: "40px", height: "40px", objectFit: "contain",
-                                  borderRadius: "6px", background: "#f8f8f8", flexShrink: 0
-                                }}
+                                style={{ width: "40px", height: "40px", objectFit: "contain", borderRadius: "6px", background: "#f8f8f8", flexShrink: 0 }}
                               />
                             )}
                             <span style={{ fontWeight: "600", color: "#222", fontSize: "13px", lineHeight: "1.4" }}>
@@ -353,18 +263,22 @@ function Alerts() {
                           </div>
                         </td>
 
+                        {/* Price at creation */}
                         <td style={{ ...tdStyle, color: "#888", fontWeight: "600" }}>
                           ₹{creation.toLocaleString()}
                         </td>
 
+                        {/* Current price */}
                         <td style={{ ...tdStyle, color: "#1a3cff", fontWeight: "700" }}>
                           ₹{current.toLocaleString()}
                         </td>
 
+                        {/* Target price */}
                         <td style={{ ...tdStyle, color: "#16a34a", fontWeight: "700" }}>
                           ₹{target.toLocaleString()}
                         </td>
 
+                        {/* Drop needed */}
                         <td style={tdStyle}>
                           {isTriggered ? (
                             <span style={{ color: "#16a34a", fontWeight: "700", fontSize: "16px" }}>✓</span>
@@ -379,6 +293,7 @@ function Alerts() {
                           )}
                         </td>
 
+                        {/* Status */}
                         <td style={tdStyle}>
                           <span style={{
                             padding: "5px 12px", borderRadius: "999px",
@@ -396,37 +311,59 @@ function Alerts() {
                           )}
                         </td>
 
+                        {/* Date set */}
                         <td style={{ ...tdStyle, color: "#888", fontSize: "13px" }}>
                           {formatDate(alert.createdAt)}
                         </td>
 
-                        <td style={{ ...tdStyle, display: "flex", flexDirection: "column", gap: "6px" }}>
-                          {isTriggered && !alert.read && (
+                        {/* ✅ Action buttons */}
+                        <td style={tdStyle}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "stretch", minWidth: "120px" }}>
+
+                            {/* View Deal — always shown */}
                             <button
-                              onClick={() => markAsRead(alert.id)}
+                              onClick={() => navigate("/product/" + alert.productId)}
                               style={{
-                                padding: "6px 14px", backgroundColor: "#f0fdf4",
-                                color: "#15803d", border: "1px solid #bbf7d0",
+                                padding: "6px 14px", backgroundColor: "#1a3cff",
+                                color: "white", border: "none", borderRadius: "8px",
+                                fontWeight: "600", fontSize: "13px", cursor: "pointer",
+                                fontFamily: "Inter, sans-serif"
+                              }}
+                            >
+                              🛒 View Deal
+                            </button>
+
+                            {/* Mark as Read — only for unread triggered alerts */}
+                            {isTriggered && !alert.read && (
+                              <button
+                                onClick={() => markAsRead(alert.id)}
+                                style={{
+                                  padding: "6px 14px", backgroundColor: "#f0fdf4",
+                                  color: "#15803d", border: "1px solid #bbf7d0",
+                                  borderRadius: "8px", fontWeight: "600",
+                                  fontSize: "13px", cursor: "pointer",
+                                  fontFamily: "Inter, sans-serif"
+                                }}
+                              >
+                                ✓ Mark as Read
+                              </button>
+                            )}
+
+                            {/* Remove */}
+                            <button
+                              onClick={() => removeAlert(alert.id)}
+                              style={{
+                                padding: "6px 14px", backgroundColor: "#fff0f0",
+                                color: "#e53935", border: "1px solid #e53935",
                                 borderRadius: "8px", fontWeight: "600",
                                 fontSize: "13px", cursor: "pointer",
                                 fontFamily: "Inter, sans-serif"
                               }}
                             >
-                              ✓ Mark as Read
+                              Remove
                             </button>
-                          )}
-                          <button
-                            onClick={() => removeAlert(alert.id)}
-                            style={{
-                              padding: "6px 14px", backgroundColor: "#fff0f0",
-                              color: "#e53935", border: "1px solid #e53935",
-                              borderRadius: "8px", fontWeight: "600",
-                              fontSize: "13px", cursor: "pointer",
-                              fontFamily: "Inter, sans-serif"
-                            }}
-                          >
-                            Remove
-                          </button>
+
+                          </div>
                         </td>
 
                       </tr>
@@ -440,7 +377,6 @@ function Alerts() {
         )}
 
       </div>
-
       <Footer />
     </div>
   );

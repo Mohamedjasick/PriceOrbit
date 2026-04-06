@@ -39,11 +39,11 @@ const AnimatedNumber = ({ target, suffix = '' }) => {
 
 // ─── Popular search chips ─────────────────────────────────────────────────────
 const POPULAR_SEARCHES = [
-  { label: '📱 iPhone 15',        query: 'iPhone 15'    },
-  { label: '💻 MacBook Air',      query: 'MacBook Air'  },
-  { label: '🎧 Sony WH-1000XM5', query: 'Sony WH'      },
-  { label: '📺 Samsung 4K TV',    query: 'Samsung TV'   },
-  { label: '⌚ Apple Watch',       query: 'Apple Watch'  },
+  { label: '💻 Laptops',      query: 'laptop'     },
+  { label: '📱 Smartphones',  query: 'smartphone' },
+  { label: '⌚ Watches',       query: 'watch'      },
+  { label: '👟 Sneakers',      query: 'sneakers'   },
+  { label: '🕶️ Sunglasses',   query: 'sunglasses' },
 ];
 
 function Home() {
@@ -358,14 +358,11 @@ const styles = {
   },
 
   searchWrap: {
-    width:          '100%',
-    maxWidth:       '640px',
-    background:     'rgba(255,255,255,0.1)',
-    borderRadius:   '16px',
-    padding:        '6px',
-    backdropFilter: 'blur(12px)',
-    border:         '1px solid rgba(255,255,255,0.2)',
-    boxShadow:      '0 8px 32px rgba(0,0,0,0.12)',
+    width:        '100%',
+    maxWidth:     '640px',
+    borderRadius: '16px',
+    padding:      '6px',
+    
   },
 
   popularRow: {

@@ -9,13 +9,14 @@
 ![JWT](https://img.shields.io/badge/Auth-JWT-yellow)
 ![Live](https://img.shields.io/badge/Live-Deployed-success)
 
-**🌐 Live Demo: [https://price-orbit.vercel.app](https://price-orbit.vercel.app)**
+**🌐 Live Demo: [https://price-orbit.vercel.app](https://price-orbit.vercel.app)**  
+**🔧 Backend API: [https://priceorbit-backend.onrender.com](https://priceorbit-backend.onrender.com)**
 
 ---
 
 ## What is PriceOrbit?
 
-PriceOrbit helps Indian shoppers compare product prices between **Amazon** and **Flipkart** in one place. Users can track price history, save products, set price drop alerts, and discover trending deals — all in a clean, modern interface.
+PriceOrbit helps Indian shoppers compare product prices between **Amazon** and **Flipkart** in one place. Users can search products, compare prices side-by-side, view price history charts, save products, and set price drop alerts — all in a clean, modern interface built for the Indian market with ₹ pricing.
 
 ---
 
@@ -30,44 +31,50 @@ PriceOrbit helps Indian shoppers compare product prices between **Amazon** and *
 ### Deals Page
 ![Deals](screenshots/deals.png)
 
-### Saved Products
-![Saved](screenshots/saved.png)
-
 ### Price Alerts
 ![Alerts](screenshots/alerts.png)
+
+### Saved Products
+![Saved](screenshots/saved.png)
 
 ---
 
 ## Features
 
-### Search & Compare
-- Search products across Amazon and Flipkart simultaneously
-- Side-by-side price comparison with retailer badges
-- Product detail page with full specifications
+### 🔍 Search & Compare
+- Search products dynamically via DummyJSON API
+- Side-by-side Amazon vs Flipkart price comparison
+- Simulated price variance (±5–15%) with USD → INR conversion (1 USD = ₹83.5)
+- Smart autocomplete with popular search suggestions
+- Category filter buttons on Results and Deals pages
 
-### Price History
-- Visual price history chart powered by Recharts
-- Track how prices have changed over time
-- Know the best time to buy
+### 📈 Price History
+- 6-month price history chart powered by Recharts
+- Visual trend line showing price drops over time
+- Price drop percentage badges on product cards
 
-### Price Alerts
+### 🔔 Price Alerts
 - Set a target price for any product
-- Backend checks prices and triggers alerts automatically
-- Manage all your alerts from a dedicated page
+- Backend checks prices and marks alerts as triggered
+- Manage all alerts from a dedicated page with status tracking
+- "View Deal" button on each alert row for quick access
 
-### Authentication
+### 🔐 Authentication
 - Secure register and login with JWT tokens
 - BCrypt password hashing
 - Protected routes — saved items and alerts require login
+- Persistent login with localStorage
 
-### Discover
-- **Deals page** — products with the biggest price drops
-- **Trending page** — most searched and viewed products
+### 🛍️ Discover
+- **Deals page** — browse products by category with fresh fetches per filter
+- **Trending page** — popular products across categories
 - **Saved page** — bookmark products for later
+- **Home DealsSection** — top 3 cheapest products shown on landing page
 
-### Profile
-- View and update your account details
-- See your saved products and active alerts in one place
+### 📦 Smart Caching
+- MongoDB 24-hour cache for search results
+- DataSeeder pre-warms cache on startup for instant category browsing
+- Pre-warmed queries: laptop, smartphone, chair, juice, lipstick, watch, shirt, sneakers, handbag, sunglasses, motorcycle
 
 ---
 
@@ -76,26 +83,26 @@ PriceOrbit helps Indian shoppers compare product prices between **Amazon** and *
 ### Frontend
 | Technology | Purpose |
 |------------|---------|
-| React 18 | UI framework |
-| React Router | Page navigation |
+| React 18 (CRA) | UI framework |
+| React Router v6 | Page navigation |
 | Recharts | Price history charts |
-| CSS3 | Styling with blue theme |
+| CSS3 | Styling with blue/white theme |
 
 ### Backend
 | Technology | Purpose |
 |------------|---------|
 | Java 17 | Programming language |
 | Spring Boot 3 | Backend framework |
-| Spring Security | Authentication & authorization |
+| Spring Security | Authentication & CORS |
 | JJWT | JSON Web Token generation |
-| Lombok | Reducing boilerplate code |
+| Lombok | Reducing boilerplate |
 | Maven | Dependency management |
 
 ### Database & APIs
 | Technology | Purpose |
 |------------|---------|
-| MongoDB Atlas | Cloud NoSQL database |
-| RapidAPI PriceScout | Live Amazon & Flipkart price data |
+| MongoDB Atlas (M0) | Cloud NoSQL database + caching |
+| DummyJSON API | Mock product data source |
 
 ### Deployment
 | Service | Purpose |
@@ -107,24 +114,62 @@ PriceOrbit helps Indian shoppers compare product prices between **Amazon** and *
 ---
 
 ## Project Structure
-```
 PriceOrbit/
-├── screenshots/               # App screenshots
-├── frontend/                  # React 18 app
-│   ├── public/
-│   └── src/
-│       ├── components/        # Navbar, Footer, SearchBar, etc.
-│       ├── pages/             # Home, Results, Deals, Trending, etc.
-│       └── config.js          # API base URL config
+├── screenshots/                      # App screenshots
 │
-└── backend/                   # Spring Boot app
-    └── src/main/java/com/priceorbit/
-        ├── controller/        # REST API endpoints
-        ├── service/           # Business logic
-        ├── model/             # MongoDB document models
-        ├── repository/        # MongoDB repositories
-        └── config/            # Security & CORS config
-```
+├── frontend/                         # React 18 app (CRA)
+│   ├── public/
+│   │   ├── amazon.png                # Retailer logos
+│   │   ├── flipkart.png
+│   │   └── logo.png
+│   └── src/
+│       ├── components/               # Reusable components
+│       │   ├── Navbar.jsx
+│       │   ├── Footer.jsx
+│       │   ├── SearchBar.jsx         # Autocomplete search
+│       │   ├── Categories.jsx        # Category cards grid
+│       │   ├── DealsSection.jsx      # Home page deals strip
+│       │   ├── SkeletonCard.jsx
+│       │   ├── OfflineBanner.jsx
+│       │   ├── Spinner.jsx
+│       │   ├── TrustedPlatforms.jsx
+│       │   └── HowItWorks.jsx
+│       ├── pages/                    # Route pages
+│       │   ├── Home.jsx
+│       │   ├── Results.jsx           # Search results + filters
+│       │   ├── Deals.jsx             # Deals browser
+│       │   ├── Trending.jsx
+│       │   ├── Saved.jsx
+│       │   ├── Alerts.jsx
+│       │   ├── ProductDetail.jsx
+│       │   ├── Profile.jsx
+│       │   ├── SignIn.jsx
+│       │   └── Register.jsx
+│       └── config.js                 # Central API base URL
+│
+└── backend/                          # Spring Boot app
+└── src/main/java/com/priceorbit/
+├── controller/               # REST API endpoints
+│   ├── ProductController.java
+│   ├── UserController.java
+│   └── AlertController.java
+├── service/                  # Business logic
+│   ├── ProductService.java   # 24hr MongoDB cache logic
+│   ├── DummyJsonService.java # DummyJSON fetcher + price simulator
+│   └── AlertService.java
+├── model/                    # MongoDB document models
+│   ├── Product.java
+│   ├── User.java
+│   └── Alert.java
+├── repository/               # MongoDB repositories
+│   ├── ProductRepository.java
+│   ├── UserRepository.java
+│   └── AlertRepository.java
+├── config/                   # Security & CORS config
+│   └── SecurityConfig.java
+├── dto/                      # Data transfer objects
+│   └── DummyJsonProduct.java
+└── DataSeeder.java           # Pre-warms MongoDB cache on startup
 
 ---
 
@@ -139,24 +184,26 @@ PriceOrbit/
 ### Products
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/products/search?q={query}` | Search products |
-| GET | `/api/products/{id}` | Get product details |
-| GET | `/api/products/deals` | Get current deals |
-| GET | `/api/products/trending` | Get trending products |
+| GET | `/api/search?query={q}` | Search products (cached 24hr) |
+| GET | `/api/products/{id}` | Get product by ID |
+| GET | `/api/categories` | Get all cached category names |
 
-### User (Protected)
+### Users (Protected)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/users/profile` | Get user profile |
-| POST | `/api/users/saved/{productId}` | Save a product |
-| DELETE | `/api/users/saved/{productId}` | Remove saved product |
+| GET | `/api/users/{id}` | Get user profile |
+| GET | `/api/users/{id}/saved` | Get saved products |
+| POST | `/api/users/{id}/saved` | Save a product |
+| DELETE | `/api/users/{id}/saved/{productId}` | Remove saved product |
 
 ### Alerts (Protected)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/alerts` | Get user's alerts |
+| GET | `/api/alerts/user/{userId}` | Get user's alerts |
 | POST | `/api/alerts` | Create price alert |
-| DELETE | `/api/alerts/{id}` | Delete alert |
+| POST | `/api/alerts/check` | Trigger price check |
+| PATCH | `/api/alerts/{id}/read` | Mark alert as read |
+| DELETE | `/api/alerts/{id}/user/{userId}` | Delete alert |
 
 ---
 
@@ -165,7 +212,7 @@ PriceOrbit/
 ### Prerequisites
 - Java 17+
 - Node.js 18+
-- MongoDB Atlas account
+- MongoDB Atlas account (free M0 tier works)
 - Maven
 
 ### 1. Clone the repository
@@ -175,15 +222,12 @@ cd PriceOrbit
 ```
 
 ### 2. Configure the backend
-```bash
-cd backend/src/main/resources
-cp application.properties.example application.properties
-```
-Fill in your values in `application.properties`:
+
+Edit `backend/src/main/resources/application.properties`:
 ```properties
-spring.data.mongodb.uri=your_mongodb_uri
-jwt.secret=your_jwt_secret
-rapidapi.key=your_rapidapi_key
+spring.data.mongodb.uri=your_mongodb_atlas_uri
+spring.data.mongodb.database=priceorbit
+jwt.secret=your_jwt_secret_key
 ```
 
 ### 3. Run the backend
@@ -191,9 +235,21 @@ rapidapi.key=your_rapidapi_key
 cd backend
 ./mvnw spring-boot:run
 # Runs on http://localhost:8080
+# DataSeeder will pre-warm MongoDB cache automatically on startup
 ```
 
-### 4. Run the frontend
+### 4. Configure the frontend
+
+Edit `frontend/src/config.js`:
+```js
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+export default API_BASE_URL;
+```
+
+For Vercel deployment, set environment variable:
+REACT_APP_API_URL=https://priceorbit-backend.onrender.com
+
+### 5. Run the frontend
 ```bash
 cd frontend
 npm install
@@ -203,23 +259,55 @@ npm start
 
 ---
 
+## How It Works
+
+### Price Simulation
+Since DummyJSON provides USD prices, PriceOrbit:
+1. Fetches product data from DummyJSON (`/products/search?q={query}`)
+2. Converts USD → INR at 1 USD = ₹83.5
+3. Simulates Amazon price at base price ±5–15%
+4. Simulates Flipkart price at base price ±5–15%
+5. Caches results in MongoDB for 24 hours
+
+### Cache Strategy
+- On startup, `DataSeeder` pre-warms MongoDB with popular queries
+- On search, `ProductService` checks MongoDB first (24hr TTL)
+- If cache miss, fetches from DummyJSON and saves to MongoDB
+- Categories endpoint derives available categories from cached products
+
+---
+
+## Known Limitations
+
+- Product data comes from **DummyJSON** (mock API) — not real Amazon/Flipkart prices
+- Some categories like `fragrances`, `skin-care`, `home-decoration` have limited DummyJSON data and are excluded
+- Price alerts are checked manually via "Check Prices" button — no automated background scheduler yet
+- No email notifications for triggered alerts yet
+
+---
+
 ## Roadmap
 
 - [x] JWT Authentication
-- [x] Product search (Amazon + Flipkart)
+- [x] Product search with DummyJSON
+- [x] Amazon vs Flipkart price simulation
+- [x] MongoDB 24-hour caching
 - [x] Price history charts
 - [x] Price drop alerts
 - [x] Saved products
-- [x] Trending & Deals pages
+- [x] Category browsing (Deals + Results pages)
+- [x] Smart search autocomplete
 - [x] Live deployment (Vercel + Render)
-- [ ] RapidAPI live integration (quota reset pending)
-- [ ] Email notifications for alerts
+- [ ] Real Amazon/Flipkart API integration
+- [ ] Email notifications for triggered alerts
+- [ ] Background price check scheduler
+- [ ] Mobile app (React Native)
 
 ---
 
 ## Author
 
-**Mohamed Jasick**
+**Mohamed Jasick**  
 GitHub: [@Mohamedjasick](https://github.com/Mohamedjasick)
 
 ---

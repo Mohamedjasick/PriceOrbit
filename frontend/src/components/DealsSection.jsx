@@ -9,7 +9,7 @@ function DealsSection() {
 
   useEffect(() => {
     // ✅ Uses API_BASE instead of hardcoded localhost
-    fetch(`${API_BASE}/api/search`)
+    fetch(`${API_BASE}/api/search?query=laptop`)
       .then((res) => res.json())
       .then((data) => {
         if (!Array.isArray(data)) return;
@@ -74,7 +74,7 @@ function DealsSection() {
               <h3 className="deal-title">{product.name}</h3>
 
               <p className="deal-price">
-                Rs.{cheapest.price.toLocaleString()}
+                ₹{cheapest.price.toLocaleString()}
               </p>
 
               <div style={{

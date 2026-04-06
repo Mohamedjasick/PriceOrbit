@@ -14,4 +14,20 @@ public interface ProductRepository extends MongoRepository<Product, String> {
     List<Product> searchByNameOrCategory(String keyword);
 
     List<Product> findByCategory(String category);
+
+    /**
+     * Cache lookup method — finds all Product documents where the
+     * searchQuery field exactly matches the given normalized query string.
+     *
+     * Spring Data MongoDB automatically implements this method from its name:
+     *   findBy       → SELECT WHERE
+     *   SearchQuery  → the `searchQuery` field on Product
+     *
+     * Example: findBySearchQuery("iphone")
+     * → returns all MongoDB documents where searchQuery == "iphone"
+     *
+     * This is how ProductService checks if a query result is already cached
+     * before deciding whether to call DummyJSON or not.
+     */
+    List<Product> findBySearchQuery(String searchQuery);
 }

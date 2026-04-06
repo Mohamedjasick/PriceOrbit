@@ -2,167 +2,131 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-// ✅ Import central API base URL
 import API_BASE from "../config";
+
+// ✅ Same map as Results.jsx — maps category → DummyJSON search query
+const categoryToQuery = {
+  "laptops":             "laptop",
+  "smartphones":         "smartphone",
+  "furniture":           "chair",
+  "groceries":           "juice",
+  "beauty":              "lipstick",
+  "kitchen-accessories": "kitchen",
+  "mens-shirts":         "shirt",
+  "mens-shoes":          "sneakers",
+  "mens-watches":        "watch",
+  "mobile-accessories":  "selfie",
+  "motorcycle":          "motorcycle",
+  "sunglasses":          "sunglasses",
+  "womens-bags":         "handbag",
+  "womens-watches":      "watch",
+};
+
+// ✅ Categories with no reliable DummyJSON data — exclude from filter
+const EXCLUDED = ["fragrances", "skin-care", "home-decoration"];
 
 function Deals() {
   const navigate = useNavigate();
 
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [toast, setToast] = useState({ show: false, message: "" });
-  const [savedIds, setSavedIds] = useState([]);
+  const [products,          setProducts]          = useState([]);
+  const [categories,        setCategories]        = useState([]);
+  const [selectedCategory,  setSelectedCategory]  = useState("All");
+  const [loading,           setLoading]           = useState(true);
+  const [error,             setError]             = useState(null);
+  const [toast,             setToast]             = useState({ show: false, message: "" });
+  const [savedIds,          setSavedIds]          = useState([]);
 
-  // ✅ Uses API_BASE instead of hardcoded localhost
-  useEffect(() => {
-    fetch(`${API_BASE}/api/search?query=a`)
-      .then(function(res) {
-        if (!res.ok) throw new Error("Backend returned an error");
+  // ✅ Fetch products by query — called on mount and when category changes
+  const fetchProducts = (query) => {
+    setLoading(true);
+    setError(null);
+    fetch(`${API_BASE}/api/search?query=${encodeURIComponent(query)}`)
+      .then(res => {
+        if (!res.ok) throw new Error("Backend error");
         return res.json();
       })
-      .then(function(data) {
-        if (!Array.isArray(data)) {
-          setProducts([]);
-          setLoading(false);
-          return;
-        }
-        const sorted = data.sort(function(a, b) {
-          if (!a.prices || !b.prices) return 0;
-          const minA = Math.min.apply(null, a.prices.map(function(p) { return p.price; }));
-          const minB = Math.min.apply(null, b.prices.map(function(p) { return p.price; }));
+      .then(data => {
+        if (!Array.isArray(data)) { setProducts([]); return; }
+        // Sort by cheapest price first
+        const sorted = [...data].sort((a, b) => {
+          const minA = Math.min(...(a.prices || []).map(p => p.price));
+          const minB = Math.min(...(b.prices || []).map(p => p.price));
           return minA - minB;
         });
         setProducts(sorted);
-        setLoading(false);
       })
-      .catch(function() {
-        setError("Backend is offline — please try again later.");
-        setLoading(false);
-      });
+      .catch(() => setError("Backend is offline — please try again later."))
+      .finally(() => setLoading(false));
+  };
+
+  // ✅ On mount — load laptops as default (always cached)
+  useEffect(() => {
+    fetchProducts("laptop");
   }, []);
 
+  // ✅ Fetch category list and exclude broken ones
   useEffect(() => {
-    // ✅ Uses API_BASE
     fetch(`${API_BASE}/api/categories`)
-      .then(function(res) { return res.json(); })
-      .then(function(data) { setCategories(["All", ...data]); })
-      .catch(function() { setCategories(["All"]); });
+      .then(res => res.json())
+      .then(data => {
+        const filtered = data.filter(cat => !EXCLUDED.includes(cat));
+        setCategories(["All", ...filtered]);
+      })
+      .catch(() => setCategories(["All"]));
   }, []);
 
+  // ✅ Load saved product IDs
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token   = localStorage.getItem("token");
     const userStr = localStorage.getItem("user");
     if (!token || !userStr) return;
-
-    // ✅ try/catch around JSON.parse
     let user;
-    try {
-      user = JSON.parse(userStr);
-    } catch (e) {
-      return;
-    }
-
-    // ✅ Uses API_BASE
+    try { user = JSON.parse(userStr); } catch (e) { return; }
     fetch(`${API_BASE}/api/users/` + user.id + "/saved", {
       headers: { "Authorization": "Bearer " + token }
     })
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
-        if (Array.isArray(data)) {
-          setSavedIds(data.map(function(p) { return p.id; }));
-        }
-      })
-      .catch(function() {});
+      .then(res => res.json())
+      .then(data => { if (Array.isArray(data)) setSavedIds(data.map(p => p.id)); })
+      .catch(() => {});
   }, []);
 
-  const filteredProducts = selectedCategory === "All"
-    ? products
-    : products.filter(function(p) { return p.category === selectedCategory; });
+  // ✅ When a category button is clicked — fetch fresh products for that category
+  const handleCategoryClick = (cat) => {
+    setSelectedCategory(cat);
+    if (cat === "All") {
+      fetchProducts("laptop"); // default for "All"
+    } else {
+      const query = categoryToQuery[cat] || cat;
+      fetchProducts(query);
+    }
+  };
 
   function showToast(message) {
-    setToast({ show: true, message: message });
-    setTimeout(function() { setToast({ show: false, message: "" }); }, 2500);
+    setToast({ show: true, message });
+    setTimeout(() => setToast({ show: false, message: "" }), 2500);
   }
 
   async function handleSave(product) {
-    const token = localStorage.getItem("token");
+    const token   = localStorage.getItem("token");
     const userStr = localStorage.getItem("user");
-
-    if (!token || !userStr) {
-      showToast("Please sign in to save products!");
-      return;
-    }
-
-    if (savedIds.includes(product.id)) {
-      showToast("Already saved!");
-      return;
-    }
-
-    // ✅ try/catch around JSON.parse
+    if (!token || !userStr) { showToast("Please sign in to save products!"); return; }
+    if (savedIds.includes(product.id)) { showToast("Already saved!"); return; }
     let user;
+    try { user = JSON.parse(userStr); } catch (e) { showToast("Session error."); return; }
     try {
-      user = JSON.parse(userStr);
-    } catch (e) {
-      showToast("Session error. Please sign in again.");
-      return;
-    }
-
-    try {
-      // ✅ Uses API_BASE
-      const response = await fetch(
-        `${API_BASE}/api/users/` + user.id + "/saved",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + token
-          },
-          body: JSON.stringify({ productId: product.id })
-        }
-      );
-
+      const response = await fetch(`${API_BASE}/api/users/` + user.id + "/saved", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ productId: product.id })
+      });
       const data = await response.json();
-
       if (!response.ok) {
         showToast(data.error || "Failed to save product.");
       } else {
-        setSavedIds(function(prev) { return [...prev, product.id]; });
+        setSavedIds(prev => [...prev, product.id]);
         showToast(product.name + " saved!");
       }
-    } catch (err) {
-      showToast("Cannot connect to server.");
-    }
-  }
-
-  if (loading) {
-    return (
-      <>
-        <Navbar />
-        <div className="results-container">
-          <p style={{ textAlign: "center", marginTop: "60px" }}>
-            Loading deals...
-          </p>
-        </div>
-        <Footer />
-      </>
-    );
-  }
-
-  if (error) {
-    return (
-      <>
-        <Navbar />
-        <div className="results-container">
-          <p style={{ textAlign: "center", marginTop: "60px", color: "red" }}>
-            {error}
-          </p>
-        </div>
-        <Footer />
-      </>
-    );
+    } catch { showToast("Cannot connect to server."); }
   }
 
   return (
@@ -170,127 +134,117 @@ function Deals() {
       <Navbar />
 
       <div className="results-container">
-
         <h2 style={{ marginBottom: "24px" }}>Best Deals Today</h2>
 
-        <div style={{
-          display: "flex", gap: "10px", flexWrap: "wrap",
-          justifyContent: "center", marginBottom: "32px"
-        }}>
-          {categories.map(function(cat) {
-            return (
-              <button
-                key={cat}
-                onClick={function() { setSelectedCategory(cat); }}
-                style={{
-                  padding: "8px 22px", borderRadius: "20px",
-                  border: "2px solid #1a3cff",
-                  backgroundColor: selectedCategory === cat ? "#1a3cff" : "white",
-                  color: selectedCategory === cat ? "white" : "#1a3cff",
-                  cursor: "pointer", fontWeight: "600"
-                }}
-              >
-                {cat}
-              </button>
-            );
-          })}
+        {/* ✅ Category filter buttons — each triggers a new fetch */}
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "center", marginBottom: "32px" }}>
+          {categories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => handleCategoryClick(cat)}
+              style={{
+                padding:         "8px 22px",
+                borderRadius:    "20px",
+                border:          "2px solid #1a3cff",
+                backgroundColor: selectedCategory === cat ? "#1a3cff" : "white",
+                color:           selectedCategory === cat ? "white" : "#1a3cff",
+                cursor:          "pointer",
+                fontWeight:      "600",
+                fontFamily:      "Inter, sans-serif",
+              }}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
 
-        {filteredProducts.length === 0 && (
-          <p style={{ textAlign: "center" }}>
-            No products found in this category.
+        {/* Loading */}
+        {loading && (
+          <p style={{ textAlign: "center", marginTop: "60px", color: "#888" }}>
+            Loading deals...
           </p>
         )}
 
-        <div className="card-container">
-          {filteredProducts.map(function(product) {
+        {/* Error */}
+        {error && (
+          <p style={{ textAlign: "center", marginTop: "60px", color: "red" }}>{error}</p>
+        )}
 
-            if (!product.prices || product.prices.length === 0) return null;
+        {/* No results */}
+        {!loading && !error && products.length === 0 && (
+          <p style={{ textAlign: "center", color: "#888" }}>No products found.</p>
+        )}
 
-            const cheapest = product.prices.reduce(function(a, b) {
-              return a.price < b.price ? a : b;
-            });
-            const mostExpensive = product.prices.reduce(function(a, b) {
-              return a.price > b.price ? a : b;
-            });
-            const discount = Math.round(
-              ((mostExpensive.price - cheapest.price) / mostExpensive.price) * 100
-            );
+        {/* ✅ Product cards */}
+        {!loading && !error && (
+          <div className="card-container">
+            {products.map(product => {
+              if (!product.prices || product.prices.length === 0) return null;
 
-            const isSaved = savedIds.includes(product.id);
+              const cheapest      = product.prices.reduce((a, b) => a.price < b.price ? a : b);
+              const mostExpensive = product.prices.reduce((a, b) => a.price > b.price ? a : b);
+              const discount      = Math.round(((mostExpensive.price - cheapest.price) / mostExpensive.price) * 100);
+              const isSaved       = savedIds.includes(product.id);
 
-            return (
-              <div key={product.id} className="card">
+              return (
+                <div key={product.id} className="card">
 
-                <div className="platform-row">
-                  <img
-                    src={cheapest.retailer === "Amazon" ? "/amazon.png" : "/flipkart.png"}
-                    alt={cheapest.retailer}
-                    className="platform-logo-small"
-                  />
-                  <span>{cheapest.retailer}</span>
-                </div>
-
-                <div
-                  onClick={function() { navigate("/product/" + product.id); }}
-                  style={{ cursor: "pointer" }}
-                >
-                  <div className="image-frame">
+                  <div className="platform-row">
                     <img
-                      src={product.imageUrl || "/products/sample-product.png"}
-                      alt={product.name}
-                      className="product-image"
+                      src={cheapest.retailer === "Amazon" ? "/amazon.png" : "/flipkart.png"}
+                      alt={cheapest.retailer}
+                      className="platform-logo-small"
                     />
+                    <span>{cheapest.retailer}</span>
                   </div>
 
-                  <h3 className="product-title">{product.name}</h3>
+                  <div onClick={() => navigate("/product/" + product.id)} style={{ cursor: "pointer" }}>
+                    <div className="image-frame">
+                      <img
+                        src={product.imageUrl || "/products/sample-product.png"}
+                        alt={product.name}
+                        className="product-image"
+                      />
+                    </div>
+                    <h3 className="product-title">{product.name}</h3>
+                    {discount > 0 && (
+                      <p className="old-price">₹{mostExpensive.price.toLocaleString()}</p>
+                    )}
+                    <p className="price">₹{cheapest.price.toLocaleString()}</p>
+                    {discount > 0 && <span className="badge">{discount}% OFF</span>}
+                  </div>
 
-                  {discount > 0 && (
-                    <p className="old-price">
-                      {"\u20B9"}{mostExpensive.price.toLocaleString()}
-                    </p>
-                  )}
+                  <div style={{ display: "flex", gap: "8px", width: "100%", marginTop: "12px" }}>
+                    <button
+                      className="deal-btn"
+                      style={{ flex: 2 }}
+                      onClick={() => window.open(cheapest.url, "_blank", "noopener,noreferrer")}
+                    >
+                      View Deal
+                    </button>
+                    <button
+                      onClick={() => handleSave(product)}
+                      style={{
+                        flex:            1,
+                        border:          isSaved ? "1.5px solid #22c55e" : "1.5px solid #1a3cff",
+                        backgroundColor: isSaved ? "#f0fdf4" : "white",
+                        color:           isSaved ? "#16a34a" : "#1a3cff",
+                        borderRadius:    "7px",
+                        fontWeight:      "600",
+                        cursor:          "pointer",
+                        fontSize:        "13px",
+                        fontFamily:      "Inter, sans-serif",
+                      }}
+                    >
+                      {isSaved ? "Saved" : "Save"}
+                    </button>
+                  </div>
 
-                  <p className="price">{"\u20B9"}{cheapest.price.toLocaleString()}</p>
-
-                  {discount > 0 && (
-                    <span className="badge">{discount}% OFF</span>
-                  )}
                 </div>
-
-                <div style={{
-                  display: "flex", gap: "8px",
-                  width: "100%", marginTop: "12px"
-                }}>
-                  <button
-                    className="deal-btn"
-                    style={{ flex: 2 }}
-                    onClick={function() { window.open(cheapest.url, "_blank"); }}
-                  >
-                    View Deal
-                  </button>
-
-                  <button
-                    onClick={function() { handleSave(product); }}
-                    style={{
-                      flex: 1,
-                      border: isSaved ? "1.5px solid #22c55e" : "1.5px solid #1a3cff",
-                      backgroundColor: isSaved ? "#f0fdf4" : "white",
-                      color: isSaved ? "#16a34a" : "#1a3cff",
-                      borderRadius: "7px",
-                      fontWeight: "600",
-                      cursor: "pointer",
-                      fontSize: "13px"
-                    }}
-                  >
-                    {isSaved ? "Saved" : "Save"}
-                  </button>
-                </div>
-
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
       </div>
 
@@ -301,7 +255,8 @@ function Deals() {
           position: "fixed", bottom: "30px", right: "30px",
           background: "#050d2e", color: "white",
           padding: "14px 22px", borderRadius: "10px",
-          boxShadow: "0 8px 28px rgba(26,60,255,0.3)"
+          boxShadow: "0 8px 28px rgba(26,60,255,0.3)",
+          fontFamily: "Inter, sans-serif", fontWeight: "600",
         }}>
           {toast.message}
         </div>

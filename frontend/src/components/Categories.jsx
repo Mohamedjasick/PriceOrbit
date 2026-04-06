@@ -2,51 +2,115 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import OfflineBanner from "./OfflineBanner";
 import Spinner from "./Spinner";
-// ✅ Import central API base URL — works locally and on Vercel
 import API_BASE from "../config";
 
-const categoryIcons = {
-  "Audio":    "🎧",
-  "Laptops":  "💻",
-  "Phones":   "📱",
-  "TVs":      "📺",
-  "Tablets":  "📟",
-  "Cameras":  "📷",
-  "Watches":  "⌚",
-  "Speakers": "🔊",
-  "Gaming":   "🎮",
-  "Appliances": "🏠",
+// ---------------------------------------------------------------
+// Maps each DummyJSON category name → a search query that actually
+// returns results from DummyJSON's /products/search endpoint.
+// This is needed because DummyJSON searches product titles/descriptions,
+// not category names directly. e.g. searching "laptops" returns nothing
+// but searching "laptop" returns products in the laptops category.
+// ---------------------------------------------------------------
+const categoryToQuery = {
+  "beauty":              "lipstick",
+  "furniture":           "chair",
+  "groceries":           "juice",
+  "home-decoration":     "decoration",
+  "kitchen-accessories": "kitchen",
+  "laptops":             "laptop",
+  "mens-shirts":         "shirt",
+  "mens-shoes":          "sneakers",
+  "mens-watches":        "watch",
+  "mobile-accessories":  "selfie",
+  "motorcycle":          "motorcycle",
+  "skin-care":           "skincare",
+  "smartphones":         "smartphone",
+  "sports-accessories":  "sport",
+  "sunglasses":          "sunglasses",
+  "tablets":             "tablet",
+  "tops":                "shirt",
+  "vehicle":             "car",
+  "womens-bags":         "handbag",
+  "womens-dresses":      "dress",
+  "womens-jewellery":    "ring",
+  "womens-shoes":        "heels",
+  "womens-watches":      "watch",
 };
 
+// ---------------------------------------------------------------
+// Emoji icons for every DummyJSON category
+// ---------------------------------------------------------------
+const categoryIcons = {
+  "beauty":              "💄",
+  "furniture":           "🛋️",
+  "groceries":           "🛒",
+  "home-decoration":     "🏠",
+  "kitchen-accessories": "🍳",
+  "laptops":             "💻",
+  "mens-shirts":         "👕",
+  "mens-shoes":          "👟",
+  "mens-watches":        "⌚",
+  "mobile-accessories":  "🔌",
+  "motorcycle":          "🏍️",
+  "skin-care":           "🧴",
+  "smartphones":         "📱",
+  "sports-accessories":  "⚽",
+  "sunglasses":          "🕶️",
+  "tablets":             "📟",
+  "tops":                "👚",
+  "vehicle":             "🚗",
+  "womens-bags":         "👜",
+  "womens-dresses":      "👗",
+  "womens-jewellery":    "💍",
+  "womens-shoes":        "👠",
+  "womens-watches":      "⌚",
+};
+
+// ---------------------------------------------------------------
+// Accent colors per category (used via CSS variable --cat-color)
+// ---------------------------------------------------------------
 const categoryColors = {
-  "Audio":    "#6366f1",
-  "Laptops":  "#1a3cff",
-  "Phones":   "#0ea5e9",
-  "TVs":      "#8b5cf6",
-  "Tablets":  "#06b6d4",
-  "Cameras":  "#f59e0b",
-  "Watches":  "#10b981",
-  "Speakers": "#ef4444",
-  "Gaming":   "#ec4899",
-  "Appliances": "#64748b",
+  "beauty":              "#ec4899",
+  "furniture":           "#92400e",
+  "groceries":           "#16a34a",
+  "home-decoration":     "#0ea5e9",
+  "kitchen-accessories": "#f59e0b",
+  "laptops":             "#1a3cff",
+  "mens-shirts":         "#0369a1",
+  "mens-shoes":          "#b45309",
+  "mens-watches":        "#059669",
+  "mobile-accessories":  "#6366f1",
+  "motorcycle":          "#dc2626",
+  "skin-care":           "#db2777",
+  "smartphones":         "#0ea5e9",
+  "sports-accessories":  "#16a34a",
+  "sunglasses":          "#d97706",
+  "tablets":             "#06b6d4",
+  "tops":                "#8b5cf6",
+  "vehicle":             "#475569",
+  "womens-bags":         "#be185d",
+  "womens-dresses":      "#7c3aed",
+  "womens-jewellery":    "#b45309",
+  "womens-shoes":        "#be185d",
+  "womens-watches":      "#0d9488",
 };
 
 function Categories() {
-
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // ✅ Uses API_BASE instead of hardcoded localhost
     fetch(`${API_BASE}/api/categories`)
       .then(res => {
         if (!res.ok) throw new Error("Backend error");
         return res.json();
       })
       .then(data => {
-        setCategories(data);
+      
+        const excluded = ["fragrances", "skin-care"];
+        setCategories(data.filter(cat => !excluded.includes(cat)));
         setLoading(false);
       })
       .catch(() => {
@@ -56,7 +120,10 @@ function Categories() {
   }, []);
 
   function handleCategoryClick(category) {
-    navigate(`/results?category=${encodeURIComponent(category)}`);
+    // Look up the search query that works for this category on DummyJSON.
+    // Fall back to the category name itself if not in the map.
+    const query = categoryToQuery[category] || category;
+    navigate(`/results?query=${encodeURIComponent(query)}`);
   }
 
   if (loading) return <Spinner />;

@@ -15,9 +15,17 @@ import java.util.Optional;
  * Delegates actual work to ProductService.
  *
  * Base path: /api
+ *
+ * CHANGES FROM ORIGINAL:
+ * - /api/search now drives DummyJSON fetching via ProductService cache logic.
+ *   The endpoint signature is IDENTICAL to before — no frontend changes needed.
+ * - All other endpoints are completely unchanged.
+ *
+ * Response shape is preserved exactly so the frontend works without modification.
  */
 @RestController
 @RequestMapping("/api")
+
 public class ProductController {
 
     @Autowired
@@ -26,10 +34,22 @@ public class ProductController {
     /**
      * GET /api/search?query=phone
      * GET /api/search?query=phone&category=Phones
-     * GET /api/search           ← query is now optional (defaults to "")
+     * GET /api/search           ← blank query returns all cached products
      *
-     * When query is blank, ProductService returns ALL products.
-     * This fixes the Deals page which calls /api/search with no query param.
+     * Flow (handled entirely inside ProductService):
+     *   1. Normalize query → check MongoDB cache
+     *   2. Cache hit + fresh   → return cached products immediately
+     *   3. Cache miss/expired  → fetch from DummyJSON, cache in MongoDB, return
+     *
+     * Response shape: List<Product> — identical to original, no frontend changes needed.
+     *
+     * Each Product contains:
+     *   - name, category, brand, description, imageUrl  (same as before)
+     *   - prices: [ { retailer, price, url, lastUpdated }, ... ]  (Amazon + Flipkart in INR)
+     *   - priceHistory: [ { date, price }, ... ]  (6 months, INR)
+     *   - basePrice   (INR, new field — frontend can ignore if not needed)
+     *   - searchQuery (cache key — frontend can ignore)
+     *   - cachedAt    (cache timestamp — frontend can ignore)
      */
     @GetMapping("/search")
     public ResponseEntity<List<Product>> searchProducts(
@@ -42,7 +62,9 @@ public class ProductController {
 
     /**
      * GET /api/categories
-     * Returns a distinct sorted list of all category names.
+     * Returns a distinct sorted list of all category names found in MongoDB.
+     * Categories now reflect whatever DummyJSON has returned and cached.
+     * Unchanged from original.
      */
     @GetMapping("/categories")
     public ResponseEntity<List<String>> getCategories() {
@@ -51,7 +73,9 @@ public class ProductController {
 
     /**
      * GET /api/products/{id}
-     * Returns a single full product. 404 if not found.
+     * Returns a single full product by MongoDB _id.
+     * 404 if not found.
+     * Unchanged from original.
      */
     @GetMapping("/products/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable String id) {
@@ -64,10 +88,12 @@ public class ProductController {
     /**
      * GET /api/products/{id}/history
      * Returns ONLY the priceHistory array for a product.
-     * Lighter than loading the full product — the chart only needs this data.
+     * Lighter than loading the full product — the chart only needs this.
      *
-     * 200 OK        → price history array (may be empty [])
-     * 404 Not Found → product ID doesn't exist
+     * 200 OK        → price history array (INR values, 6 monthly points)
+     * 404 Not Found → product ID doesn't exist in MongoDB
+     *
+     * Unchanged from original.
      */
     @GetMapping("/products/{id}/history")
     public ResponseEntity<List<PricePoint>> getPriceHistory(@PathVariable String id) {

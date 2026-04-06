@@ -10,9 +10,30 @@ import {
 // ✅ Import central API base URL
 import API_BASE from "../config";
 
+// ✅ Centralized categoryToQuery map — used by filter buttons
+const categoryToQuery = {
+  "laptops":              "laptop",
+  "smartphones":          "smartphone",
+  "beauty":               "lipstick",
+  "furniture":            "chair",
+  "groceries":            "juice",
+  "kitchen-accessories":  "kitchen",
+  "mens-shirts":          "shirt",
+  "mens-shoes":           "sneakers",
+  "mens-watches":         "watch",
+  "mobile-accessories":   "selfie",
+  "motorcycle":           "motorcycle",
+  "sunglasses":           "sunglasses",
+  "womens-bags":          "handbag",
+  "womens-watches":       "watch",
+  "skin-care":            "skincare",
+};
+
 function Results() {
   const [searchParams] = useSearchParams();
-  const searchQuery   = searchParams.get("q");
+
+  // ✅ Read BOTH "q" and "query" so links from navbar AND category buttons work
+  const searchQuery   = searchParams.get("q") || searchParams.get("query");
   const categoryParam = searchParams.get("category");
 
   const navigate = useNavigate();
@@ -29,8 +50,11 @@ function Results() {
   const [sortOption,       setSortOption]       = useState("default");
   const [savedIds,         setSavedIds]         = useState([]);
 
-  const activeQuery = searchQuery || categoryParam;
+  // ✅ activeQuery prefers searchQuery, falls back to categoryParam mapped through categoryToQuery
+  const activeQuery = searchQuery
+    || (categoryParam ? (categoryToQuery[categoryParam] || categoryParam) : null);
 
+  // ✅ Fetch products whenever activeQuery changes (triggered by URL change)
   useEffect(() => {
     if (!activeQuery) {
       setLoading(false);
@@ -43,7 +67,6 @@ function Results() {
     setOpenHistory(null);
     setCompareList([]);
 
-    // ✅ Uses API_BASE
     fetch(`${API_BASE}/api/search?query=` + encodeURIComponent(activeQuery))
       .then(res => {
         if (!res.ok) throw new Error("Backend error");
@@ -59,25 +82,30 @@ function Results() {
       });
   }, [activeQuery]);
 
+  // ✅ Fetch available category filter labels from backend
   useEffect(() => {
-    // ✅ Uses API_BASE
     fetch(`${API_BASE}/api/categories`)
-      .then(res => res.json())
-      .then(data => setCategories(["All", ...data]))
+  .then(res => res.json())
+  .then(data => {
+    // ✅ Remove categories with no reliable DummyJSON data
+    const excluded = ["fragrances", "skin-care", "home-decoration"];
+    setCategories(["All", ...data.filter(cat => !excluded.includes(cat))]);
+  })
       .catch(() => {});
   }, []);
 
+  // ✅ Sync selectedCategory highlight with URL param
   useEffect(() => {
     if (categoryParam) setSelectedCategory(categoryParam);
     else setSelectedCategory("All");
   }, [categoryParam]);
 
+  // ✅ Load saved product IDs for the logged-in user
   useEffect(() => {
     const token   = localStorage.getItem("token");
     const userStr = localStorage.getItem("user");
     if (!token || !userStr) return;
 
-    // ✅ try/catch around JSON.parse
     let user;
     try {
       user = JSON.parse(userStr);
@@ -85,7 +113,6 @@ function Results() {
       return;
     }
 
-    // ✅ Uses API_BASE
     fetch(`${API_BASE}/api/users/` + user.id + "/saved", {
       headers: { Authorization: "Bearer " + token }
     })
@@ -96,6 +123,7 @@ function Results() {
       .catch(() => {});
   }, []);
 
+  // ✅ Flatten products × prices into individual result rows
   const results = products.flatMap(product =>
     product.prices.map(priceEntry => ({
       id:           product.id + "_" + priceEntry.retailer,
@@ -112,6 +140,8 @@ function Results() {
     }))
   );
 
+  // ✅ In-memory filter only used when selectedCategory is set from URL category param
+  // When filter BUTTONS are clicked they navigate → URL changes → fresh fetch happens
   const filteredResults = selectedCategory === "All"
     ? results
     : results.filter(item => item.category === selectedCategory);
@@ -148,8 +178,8 @@ function Results() {
 
     const history = item.priceHistory || [];
     if (history.length >= 2) {
-      const sorted  = [...history].sort((a, b) => new Date(a.date) - new Date(b.date));
-      const oldest  = sorted[0].price;
+      const sorted = [...history].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const oldest = sorted[0].price;
       if (oldest > item.price) {
         const pct = Math.round(((oldest - item.price) / oldest) * 100);
         if (pct > bestPct) {
@@ -179,7 +209,6 @@ function Results() {
     setTimeout(() => setToast(""), 2500);
   };
 
-  // ✅ Copy product link to clipboard — Task 7a
   const handleCopyLink = (productId) => {
     const link = window.location.origin + "/product/" + productId;
     navigator.clipboard.writeText(link)
@@ -200,7 +229,6 @@ function Results() {
       return;
     }
 
-    // ✅ try/catch around JSON.parse
     let user;
     try {
       user = JSON.parse(userStr);
@@ -210,7 +238,6 @@ function Results() {
     }
 
     try {
-      // ✅ Uses API_BASE
       const response = await fetch(
         `${API_BASE}/api/users/` + user.id + "/saved",
         {
@@ -246,7 +273,6 @@ function Results() {
     const target = prompt("Enter your target price (₹):");
     if (!target || isNaN(target) || Number(target) <= 0) return;
 
-    // ✅ try/catch around JSON.parse
     let user;
     try {
       user = JSON.parse(userStr);
@@ -255,7 +281,6 @@ function Results() {
       return;
     }
 
-    // ✅ Uses API_BASE
     fetch(`${API_BASE}/api/alerts`, {
       method: "POST",
       headers: {
@@ -294,13 +319,28 @@ function Results() {
         <div className="results-toolbar">
           {categories.length > 0 && (
             <div className="filter-buttons">
-              {categories.map((cat, index) => (
+              {categories.map((filterCat, index) => (
                 <button
                   key={index}
-                  className={"filter-btn " + (selectedCategory === cat ? "active" : "")}
-                  onClick={() => setSelectedCategory(cat)}
+                  className={"filter-btn " + (selectedCategory === filterCat ? "active" : "")}
+                  onClick={() => {
+                    if (filterCat === "All") {
+                      // ✅ "All" clears category, goes back to current search query
+                      // or home if no query exists
+                      if (searchQuery) {
+                        navigate(`/results?q=${encodeURIComponent(searchQuery)}`);
+                      } else {
+                        navigate("/results");
+                      }
+                    } else {
+                      // ✅ Map category label → search query → navigate
+                      // This changes the URL → triggers useEffect → fresh API fetch
+                      const q = categoryToQuery[filterCat] || filterCat;
+                      navigate(`/results?query=${encodeURIComponent(q)}`);
+                    }
+                  }}
                 >
-                  {cat}
+                  {filterCat}
                 </button>
               ))}
             </div>
@@ -341,8 +381,9 @@ function Results() {
                   key={i}
                   className="no-results-cat-btn"
                   onClick={() => {
-                    setSelectedCategory(cat);
-                    window.location.href = "/results?category=" + encodeURIComponent(cat);
+                    // ✅ Also fixed here — navigate properly instead of hard reload
+                    const q = categoryToQuery[cat] || cat;
+                    navigate(`/results?query=${encodeURIComponent(q)}`);
                   }}
                 >
                   {cat}
@@ -455,7 +496,6 @@ function Results() {
                     🔔 Set Alert
                   </button>
 
-                  {/* ✅ Copy link button — Task 7a */}
                   <button
                     onClick={() => handleCopyLink(item.productId)}
                     style={{
