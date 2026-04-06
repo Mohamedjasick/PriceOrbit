@@ -114,30 +114,31 @@ PriceOrbit helps Indian shoppers compare product prices between **Amazon** and *
 ---
 
 ## Project Structure
+```
 PriceOrbit/
 ├── screenshots/                      # App screenshots
 │
 ├── frontend/                         # React 18 app (CRA)
 │   ├── public/
-│   │   ├── amazon.png                # Retailer logos
+│   │   ├── amazon.png
 │   │   ├── flipkart.png
 │   │   └── logo.png
 │   └── src/
-│       ├── components/               # Reusable components
+│       ├── components/
 │       │   ├── Navbar.jsx
 │       │   ├── Footer.jsx
-│       │   ├── SearchBar.jsx         # Autocomplete search
-│       │   ├── Categories.jsx        # Category cards grid
-│       │   ├── DealsSection.jsx      # Home page deals strip
+│       │   ├── SearchBar.jsx
+│       │   ├── Categories.jsx
+│       │   ├── DealsSection.jsx
 │       │   ├── SkeletonCard.jsx
 │       │   ├── OfflineBanner.jsx
 │       │   ├── Spinner.jsx
 │       │   ├── TrustedPlatforms.jsx
 │       │   └── HowItWorks.jsx
-│       ├── pages/                    # Route pages
+│       ├── pages/
 │       │   ├── Home.jsx
-│       │   ├── Results.jsx           # Search results + filters
-│       │   ├── Deals.jsx             # Deals browser
+│       │   ├── Results.jsx
+│       │   ├── Deals.jsx
 │       │   ├── Trending.jsx
 │       │   ├── Saved.jsx
 │       │   ├── Alerts.jsx
@@ -145,33 +146,32 @@ PriceOrbit/
 │       │   ├── Profile.jsx
 │       │   ├── SignIn.jsx
 │       │   └── Register.jsx
-│       └── config.js                 # Central API base URL
+│       └── config.js
 │
-└── backend/                          # Spring Boot app
-└── src/main/java/com/priceorbit/
-├── controller/               # REST API endpoints
-│   ├── ProductController.java
-│   ├── UserController.java
-│   └── AlertController.java
-├── service/                  # Business logic
-│   ├── ProductService.java   # 24hr MongoDB cache logic
-│   ├── DummyJsonService.java # DummyJSON fetcher + price simulator
-│   └── AlertService.java
-├── model/                    # MongoDB document models
-│   ├── Product.java
-│   ├── User.java
-│   └── Alert.java
-├── repository/               # MongoDB repositories
-│   ├── ProductRepository.java
-│   ├── UserRepository.java
-│   └── AlertRepository.java
-├── config/                   # Security & CORS config
-│   └── SecurityConfig.java
-├── dto/                      # Data transfer objects
-│   └── DummyJsonProduct.java
-└── DataSeeder.java           # Pre-warms MongoDB cache on startup
-
----
+└── backend/
+    └── src/main/java/com/priceorbit/
+        ├── controller/
+        │   ├── ProductController.java
+        │   ├── UserController.java
+        │   └── AlertController.java
+        ├── service/
+        │   ├── ProductService.java
+        │   ├── DummyJsonService.java
+        │   └── AlertService.java
+        ├── model/
+        │   ├── Product.java
+        │   ├── User.java
+        │   └── Alert.java
+        ├── repository/
+        │   ├── ProductRepository.java
+        │   ├── UserRepository.java
+        │   └── AlertRepository.java
+        ├── config/
+        │   └── SecurityConfig.java
+        ├── dto/
+        │   └── DummyJsonProduct.java
+        └── DataSeeder.java
+```
 
 ## API Endpoints
 
