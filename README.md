@@ -9,7 +9,7 @@
 ![JWT](https://img.shields.io/badge/Auth-JWT-yellow)
 ![Live](https://img.shields.io/badge/Live-Deployed-success)
 
-**🌐 Live Demo: [https://priceorbit-hmj.vercel.app/](https://priceorbit-hmj.vercel.app/)**  
+**🌐 Live Demo: [https://priceorbit-hmj.vercel.app](https://priceorbit-hmj.vercel.app)**  
 **🔧 Backend API: [https://priceorbit-backend.onrender.com](https://priceorbit-backend.onrender.com)**
 
 ---
